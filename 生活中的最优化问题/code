@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+double objectiveFunction(const vector<double>& x, const vector<double>& a) {
+    double Z = 0.0;
+    for (size_t i = 0; i < x.size(); ++i) {
+        Z += a[i] * log(x[i] + 1);
+    }
+    return Z;
+}
+vector<double> gradient(const vector<double>& x, const vector<double>& a) {
+    vector<double> grad(x.size());
+    for (size_t i = 0; i < x.size(); ++i) {
+        grad[i] = a[i] / (x[i] + 1);
+    }
+    return grad;
+}
+vector<double> gradientDescent(vector<double>& x, const vector<double>& a, double T, double learningRate, int maxIter) {
+    int iter = 0;
+    while (iter < maxIter) {
+        // 计算梯度
+        vector<double> grad = gradient(x, a);
+        // 更新每个科目的学习时间
+        for (size_t i = 0; i < x.size(); ++i) {
+            x[i] += learningRate * grad[i];
+        }
+        // 计算当前总时间
+        double totalTime = 0.0;
+        for (size_t i = 0; i < x.size(); ++i) {
+            totalTime += x[i];
+        }
+        // 调整每个科目的时间，使总时间满足T
+        double scale = T / totalTime;
+        for (size_t i = 0; i < x.size(); ++i) {
+            x[i] *= scale;
+        }
+        // 判断是否收敛（梯度接近零）
+        double norm = 0.0;
+        for (size_t i = 0; i < grad.size(); ++i) {
+            norm += grad[i] * grad[i];
+        }
+        if (sqrt(norm) < 1e-6) {
+            break;
+        }
+        iter++;
+    }
+    return x;
+}
+int main() {
+    // 假设有3个科目
+    vector<double> a = {5, 3, 4}; // 每个科目的学习效益
+    vector<double> x = {1, 1, 1}; // 初始时间分配
+    double T = 10; // 总学习时间为10小时
+    double learningRate = 0.01; // 学习率
+    int maxIter = 1000; // 最大迭代次数
+    // 使用梯度下降法求解最优时间分配
+    vector<double> result = gradientDescent(x, a, T, learningRate, maxIter);
+    // 输出结果
+    cout << "Optimal time allocation:" << endl;
+    for (size_t i = 0; i < result.size(); ++i) {
+        cout << "Subject " << i + 1 << ": " << result[i] << " hours" << endl;
+    }
+    cout << "Total objective value: " << objectiveFunction(result, a) << endl;
+    return 0;
+}
