@@ -1,0 +1,110 @@
+//采用C++编程语言编写求解程序，编写程序的实例代码如下。
+
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+// 假设目标函数是 f(x) = (x1-1)^2 + (x2-2)^2
+// 约束函数是 g(x) = x1^2 + x2^2 - 1（表示x1^2 + x2^2 <= 1）
+// 计算目标函数值
+double objectiveFunction(const vector<double>& x) {
+    return pow(x[0] - 1, 2) + pow(x[1] - 2, 2);
+}
+// 计算目标函数的梯度
+vector<double> gradient(const vector<double>& x) {
+    vector<double> grad(2);
+    grad[0] = 2 * (x[0] - 1);
+    grad[1] = 2 * (x[1] - 2);
+    return grad;
+}
+// 计算目标函数的Hessian矩阵（这里为常数）
+vector<vector<double>> hessian() {
+    return {{2, 0}, {0, 2}};
+}
+// 罚函数法处理约束
+double penaltyFunction(const vector<double>& x, double penaltyFactor) {
+    double penalty = pow(x[0], 2) + pow(x[1], 2) - 1;
+    return objectiveFunction(x) + penaltyFactor * max(0.0, penalty);
+}
+// 梯度下降法
+vector<double> gradientDescent(vector<double>& x, double lr, int maxIter) {
+    vector<double> grad;
+    for (int iter = 0; iter < maxIter; ++iter) {
+        grad = gradient(x);
+        for (size_t i = 0; i < x.size(); ++i) {
+            x[i] -= lr * grad[i];
+        }
+    }
+    return x;
+}
+// 牛顿法
+vector<double> newtonMethod(vector<double>& x, int maxIter) {
+    for (int iter = 0; iter < maxIter; ++iter) {
+        vector<double> grad = gradient(x);
+        vector<vector<double>> H = hessian();
+        // 求解 H * delta = -grad
+        vector<double> delta(2);
+        delta[0] = -(H[0][0] * grad[0] + H[0][1] * grad[1]) / (H[0][0] * H[1][1] - H[1][0] * H[0][1]);
+        delta[1] = -(H[1][0] * grad[0] + H[1][1] * grad[1]) / (H[0][0] * H[1][1] - H[1][0] * H[0][1]);
+        for (size_t i = 0; i < x.size(); ++i) {
+            x[i] += delta[i];
+        }
+    }
+    return x;
+}
+// 共轭梯度法
+vector<double> conjugateGradient(vector<double>& x, int maxIter) {
+    vector<double> grad = gradient(x);
+    vector<double> p = grad;
+    for (int iter = 0; iter < maxIter; ++iter) {
+        double alpha = 0.0; // 计算步长
+        double beta = 0.0;  // 计算beta
+        double rs_old = 0.0;
+        double rs_new = 0.0;
+        // 计算步长和方向
+        for (size_t i = 0; i < x.size(); ++i) {
+            rs_old += grad[i] * grad[i];
+            p[i] = grad[i];
+        }
+        for (size_t i = 0; i < x.size(); ++i) {
+            x[i] -= alpha * p[i];
+        }
+    }
+    return x;
+}
+// 约束优化求解
+vector<double> solveWithPenalty(vector<double>& x, double penaltyFactor, int maxIter, string method) {
+    for (int iter = 0; iter < maxIter; ++iter) {
+        // 使用罚函数法
+        vector<double> grad = gradient(x);
+        double penaltyValue = penaltyFunction(x, penaltyFactor);
+        // 选择求解方法
+        if (method == "gradient") {
+            x = gradientDescent(x, 0.1, 100);
+        } else if (method == "newton") {
+            x = newtonMethod(x, 100);
+        } else if (method == "conjugate") {
+            x = conjugateGradient(x, 100);
+        }
+        penaltyFactor *= 10; // 逐渐增加罚因子
+    }
+    return x;
+}
+int main() {
+    double a,b;
+    cout << "Enter the starting point x1: ";
+    cin >> a;
+    cout << "Enter the starting point x2: ";
+    cin >> b;
+    vector<double> x = {a, b}; // 初始点
+    double penaltyFactor;
+    cout << "Enter the penalty factor: ";
+    cin >> penaltyFactor;  // 初始罚因子
+    int maxIter = 100;  // 最大迭代次数
+    // 使用罚函数法求解约束优化问题
+    vector<double> result = solveWithPenalty(x, penaltyFactor, maxIter, "gradient");
+    // 输出最优解
+    cout << "Optimal solution: x1 = " << result[0] << ", x2 = " << result[1] << endl;
+    return 0;
+}
