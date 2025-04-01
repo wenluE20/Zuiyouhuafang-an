@@ -1,0 +1,51 @@
+//采用C++编程语言编写求解程序，采用最速下降法求解无约束优化问题，编写程序的实例代码如下。
+
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+using namespace std;
+// 目标函数 f(x) = (x1 - 1)^2 + (x2 - 2)^2
+double objectiveFunction(const vector<double>& x) {
+    return pow(x[0] - 1, 2) + pow(x[1] - 2, 2);
+}
+// 目标函数的梯度 (∇f(x)) = [2*(x1 - 1), 2*(x2 - 2)]
+vector<double> gradient(const vector<double>& x) {
+    vector<double> grad(2);
+    grad[0] = 2 * (x[0] - 1);
+    grad[1] = 2 * (x[1] - 2);
+    return grad;
+}
+// 最速下降法
+vector<double> gradientDescent(vector<double>& x, double lr, int maxIter) {
+    vector<double> grad;
+    for (int iter = 0; iter < maxIter; ++iter) {
+        grad = gradient(x);  // 计算梯度
+        // 更新解
+        for (size_t i = 0; i < x.size(); ++i) {
+            x[i] -= lr * grad[i];  // 更新x
+        }
+        // 判断是否收敛（梯度接近零）
+        double norm = 0.0;
+        for (size_t i = 0; i < grad.size(); ++i) {
+            norm += grad[i] * grad[i];
+        }
+        norm = sqrt(norm);
+        // 若梯度足够小，则认为已经收敛
+        if (norm < 1e-6) {
+            break;
+        }
+    }
+    return x;
+}
+int main() {
+    vector<double> x = {0.0, 0.0};  // 初始猜测
+    double learningRate = 0.1;       // 学习率
+    int maxIter = 1000;              // 最大迭代次数
+    // 使用最速下降法求解无约束优化问题
+    vector<double> result = gradientDescent(x, learningRate, maxIter);
+    // 输出最优解和最小目标函数值
+    cout << "Optimal solution: x1 = " << result[0] << ", x2 = " << result[1] << endl;
+    cout << "Optimal objective value: " << objectiveFunction(result) << endl;
+    return 0;
+}
